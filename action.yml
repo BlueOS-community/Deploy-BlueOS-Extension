@@ -1,0 +1,191 @@
+name: 'Deploy BlueOS Extension'
+description: 'An Action to build and deploy a BlueOS Extension as a docker image.'
+inputs:
+  docker-username:
+    description: 'Your username for your Docker registry of choice*.
+      Should be stored in a GitHub Action Secret.
+      *Currently only Docker Hub is supported.'
+    required: true
+  docker-password:
+    description: 'The password for your Docker registry authentication.
+      Should be stored in a GitHub Action Secret.'
+    required: true
+  build-platforms:
+    description: 'A comma-separated string of the architectures to build for.
+      Defaults to the ones BlueOS is automatically built for.'
+    default: 'linux/arm/v7,linux/arm64/v8,linux/amd64'
+  image-name:
+    description: '...'
+    required: true
+  image-prefix:
+    description: '...'
+    default: 'blueos-'
+  author:
+    default: 'Author Name'
+  author-email:
+    default: 'author.email@example.com'
+  maintainer:
+    description: 'The maintaining organisation or developer.'
+    default: ${{ github.repository_owner }}
+  maintainer-email:
+    default: 'maintainer.email@example.com'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags
+  
+    - name: Prepare
+      id: prepare
+      run: |
+        # Deploy image with the name of the branch, if the build is a git tag replace tag with the tag name.
+        # If the git tag is in SemVer format, append the "latest" tag to the image
+        DOCKER_IMAGE=$${ inputs.docker-username }/${{ inputs.image-prefix }}${{ inputs.image-name }}
+        VERSION=${GITHUB_REF##*/}
+  
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
+  
+        TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
+        if [[ $VERSION =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+          TAGS="$TAGS --tag ${DOCKER_IMAGE}:latest"
+        fi
+  
+        echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "buildx_args=\
+          --build-arg IMAGE_NAME='${{ inputs.image-name }}' \
+          --build-arg AUTHOR='${{ inputs.author }}' \
+          --build-arg AUTHOR_EMAIL='${{ inputs.author_email }}' \
+          --build-arg MAINTAINER='${{ inputs.maintainer }}' \
+          --build-arg MAINTAINER_EMAIL='${{ inputs.maintainer-email }}' \
+          --build-arg REPO='${{ github.repository }}' \
+          --build-arg OWNER='${{ github.repository_owner }}' \
+          --cache-from 'type=local,src=/tmp/.buildx-cache' \
+          --cache-to 'type=local,dest=/tmp/.buildx-cache' \
+          ${TAGS} \
+          --file Dockerfile ." >> $GITHUB_OUTPUT
+  
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
+  
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        version: latest
+  
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      id: cache
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles('Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles('Dockerfile') }}
+          ${{ runner.os }}-buildx-${{ inputs.image-name }}
+  
+    - name: Docker Buildx (build)
+      run: |
+        # Pull latest development version of image (from main/master branch) to help with build speed
+        for platform in $(echo ${{ inputs.platforms }} | tr ',' '\n'); do
+          docker pull --platform ${{ inputs.build-platforms }} \
+            ${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}:${{ github.event.repository.default_branch }} || true
+        done
+        docker buildx build \
+          --output "type=image,push=false" \
+          --platform ${{ inputs.build-platforms }} \
+          ${{ steps.prepare.outputs.buildx_args }}
+  
+    - name: Login to DockerHub
+      if: success()
+      uses: docker/login-action@v2
+      with:
+        username: ${{ inputs.docker-username }}
+        password: ${{ inputs.docker-password }}
+  
+    - name: Docker Buildx (push)
+      if: success()
+      run: |
+        docker buildx build \
+          --output "type=image,push=true" \
+          --platform ${{ inputs.build-platforms }} \
+          ${{ steps.prepare.outputs.buildx_args }}
+  
+    # Sanity check - if inspection fails something has gone very wrong
+    - name: Inspect image
+      run: |
+        docker buildx imagetools \
+          inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+  
+    - name: Create image artifact
+      if: success()
+      run: |
+        PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
+        DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
+        GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+        docker buildx build \
+          ${{ steps.prepare.outputs.buildx_args }} \
+          --platform "linux/arm64/v8" \
+          --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
+  
+    - name: Upload artifact arm64-v8
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm64-v8
+        path: '*arm64-v8.tar'
+  
+    - name: Create image artifact
+      if: success()
+      run: |
+        PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
+        DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
+        GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+        docker buildx build \
+          ${{ steps.prepare.outputs.buildx_args }} \
+          --platform "linux/arm/v7" \
+          --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
+  
+    - name: Upload artifact arm-v7
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm-v7
+        path: '*arm-v7.tar'
+  
+    - name: Create image artifact
+      if: success()
+      run: |
+        PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
+        DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
+        GIT_HASH_SHORT=$(git rev-parse --short "$GITHUB_SHA")
+        docker buildx build \
+          ${{ steps.prepare.outputs.buildx_args }} \
+          --platform "linux/amd64" \
+          --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
+  
+    - name: Upload artifact amd64
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-amd64
+        path: '*amd64.tar'
+  
+    - name: Upload docker image for release
+      uses: svenstaro/upload-release-action@v2
+      if: startsWith(github.ref, 'refs/tags') && success()
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: '*.tar'
+        tag: ${{ github.ref }}
+        overwrite: true
+        prerelease: true
+        file_glob: true
