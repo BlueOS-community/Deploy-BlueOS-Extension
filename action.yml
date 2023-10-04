@@ -1,5 +1,8 @@
 name: 'Deploy BlueOS Extension'
 description: 'An Action to build and deploy a BlueOS Extension as a docker image.'
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'
 inputs:
   docker-username:
     description: 'Your username for your Docker registry of choice*.
@@ -10,15 +13,19 @@ inputs:
     description: 'The password for your Docker registry authentication.
       Should be stored in a GitHub Action Secret.'
     required: true
+  github-token:
+    description: 'Your authentification token for GitHub, for uploading image artifacts to a release.
+      Should be set to secrets.GITHUB_TOKEN.'
+    required: true
   build-platforms:
     description: 'A comma-separated string of the architectures to build for.
       Defaults to the ones BlueOS is automatically built for.'
     default: 'linux/arm/v7,linux/arm64/v8,linux/amd64'
   image-name:
-    description: '...'
+    description: 'The base name for the Docker Images and GitHub Artifacts.'
     required: true
   image-prefix:
-    description: '...'
+    description: 'An optional prefix for the Docker Image name.'
     default: 'blueos-'
   author:
     default: 'Author Name'
@@ -42,7 +49,7 @@ runs:
       run: |
         # Deploy image with the name of the branch, if the build is a git tag replace tag with the tag name.
         # If the git tag is in SemVer format, append the "latest" tag to the image
-        DOCKER_IMAGE=$${ inputs.docker-username }/${{ inputs.image-prefix }}${{ inputs.image-name }}
+        DOCKER_IMAGE=${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}
         VERSION=${GITHUB_REF##*/}
   
         if [[ $GITHUB_REF == refs/tags/* ]]; then
@@ -68,6 +75,7 @@ runs:
           --cache-to 'type=local,dest=/tmp/.buildx-cache' \
           ${TAGS} \
           --file Dockerfile ." >> $GITHUB_OUTPUT
+      shell: bash
   
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
@@ -93,13 +101,14 @@ runs:
       run: |
         # Pull latest development version of image (from main/master branch) to help with build speed
         for platform in $(echo ${{ inputs.platforms }} | tr ',' '\n'); do
-          docker pull --platform ${{ inputs.build-platforms }} \
+          docker pull --platform '${{ inputs.build-platforms }}' \
             ${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}:${{ github.event.repository.default_branch }} || true
         done
         docker buildx build \
           --output "type=image,push=false" \
-          --platform ${{ inputs.build-platforms }} \
+          --platform '${{ inputs.build-platforms }}' \
           ${{ steps.prepare.outputs.buildx_args }}
+      shell: bash
   
     - name: Login to DockerHub
       if: success()
@@ -113,14 +122,16 @@ runs:
       run: |
         docker buildx build \
           --output "type=image,push=true" \
-          --platform ${{ inputs.build-platforms }} \
+          --platform '${{ inputs.build-platforms }}' \
           ${{ steps.prepare.outputs.buildx_args }}
+      shell: bash
   
     # Sanity check - if inspection fails something has gone very wrong
     - name: Inspect image
       run: |
         docker buildx imagetools \
           inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+      shell: bash
   
     - name: Create image artifact
       if: success()
@@ -132,7 +143,8 @@ runs:
           ${{ steps.prepare.outputs.buildx_args }} \
           --platform "linux/arm64/v8" \
           --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar" \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm64-v8.tar"
+      shell: bash
   
     - name: Upload artifact arm64-v8
       uses: actions/upload-artifact@v3
@@ -151,7 +163,8 @@ runs:
           ${{ steps.prepare.outputs.buildx_args }} \
           --platform "linux/arm/v7" \
           --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm-v7.tar" \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-arm-v7.tar"
+      shell: bash
   
     - name: Upload artifact arm-v7
       uses: actions/upload-artifact@v3
@@ -170,7 +183,8 @@ runs:
           ${{ steps.prepare.outputs.buildx_args }} \
           --platform "linux/amd64" \
           --tag ${DOCKER_IMAGE}:${GIT_HASH_SHORT} \
-          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-amd64.tar" \
+          --output "type=docker,dest=${PREFIXED_IMAGE}-docker-image-${GIT_HASH_SHORT}-amd64.tar"
+      shell: bash
   
     - name: Upload artifact amd64
       uses: actions/upload-artifact@v3
@@ -183,7 +197,7 @@ runs:
       uses: svenstaro/upload-release-action@v2
       if: startsWith(github.ref, 'refs/tags') && success()
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        repo_token: ${{ inputs.github-token }}
         file: '*.tar'
         tag: ${{ github.ref }}
         overwrite: true
