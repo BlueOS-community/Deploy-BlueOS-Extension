@@ -7,8 +7,8 @@ Automatically builds for multiple hardware architectures, and provides inputs fo
 
 | Variable | Description | Required? | Example |
 |---|---|---|---|
-`docker-username` | Your username for your Docker registry of choice*.<br>Should be stored in a [GitHub Action Secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository).<br>*Currently only Docker Hub is supported. | YES | `DOCKER_USERNAME`
-`docker-password` | The password for your Docker registry authentication.<br>Should be stored in a GitHub Action Secret. | YES
+`docker-username` | Your username for your Docker registry of choice*.<br>Should be stored in a [GitHub Action Secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository).<br>*Currently only Docker Hub is supported.<br>MUST be lowercase. | YES | `secrets.DOCKER_USERNAME`
+`docker-password` | The password for your Docker registry authentication.<br>Should be stored in a GitHub Action Secret.<br>Recommended to set the secret to a [Docker Hub Access Token](https://docs.docker.com/docker-hub/access-tokens/). | YES | `secrets.DOCKER_PASSWORD`
 `github-token` | Your [authentification token for GitHub](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), for uploading image artifacts to a release/tag. | YES (if building for releases) | Should be set to `secrets.GITHUB_TOKEN`
 `build-platforms` | A comma-separated string of the architectures to build for.<br>Defaults to the ones BlueOS is automatically built for. | NO | `'linux/arm/v7,linux/arm64/v8,linux/amd64'`
 `image-name` | The base name for the Docker Images and GitHub Artifacts. | YES | `'extension-name'`
@@ -19,6 +19,8 @@ Automatically builds for multiple hardware architectures, and provides inputs fo
 `maintainer-email` | | NO | `'maintainer.email@example.com'`
 
 ## Example Usage
+
+To start with, make a Docker repository in your registry accound with the name `{image-prefix}{image-name}`. Note that `image-prefix` defaults to `blueos-` if left unspecified.
 
 ```action.yml
 name: Deploy BlueOS Extension Image
@@ -37,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy BlueOS Extension
-        uses: ES-Alexander/Deploy-BlueOS-Extension@v0.4
+        uses: BlueOS-community/Deploy-BlueOS-Extension@v1
         # specify the desired variables
         with:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
