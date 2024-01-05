@@ -47,6 +47,8 @@ runs:
     - name: Prepare
       id: prepare
       run: |
+        [ -z "${{inputs.docker-username}}" ] && echo "Error: Docker username is empty" && exit 1
+        [ -z "${{inputs.docker-password}}" ] && echo "Error: Docker password is empty" && exit 1
         # Deploy image with the name of the branch, if the build is a git tag replace tag with the tag name.
         # If the git tag is in SemVer format, append the "latest" tag to the image
         DOCKER_IMAGE=${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}
