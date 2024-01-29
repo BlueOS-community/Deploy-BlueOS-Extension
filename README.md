@@ -12,7 +12,7 @@ Automatically builds for multiple hardware architectures, and provides inputs fo
 `github-token` | Your [authentification token for GitHub](https://docs.github.com/en/actions/security-guides/automatic-token-authentication), for uploading image artifacts to a release/tag. | YES (if building for releases) | Should be set to `secrets.GITHUB_TOKEN`
 `build-platforms` | A comma-separated string of the architectures to build for.<br>Defaults to the ones BlueOS is automatically built for. | NO | `'linux/arm/v7,linux/arm64/v8,linux/amd64'`
 `image-name` | The base name for the Docker Images and GitHub Artifacts. | YES | `'extension-name'`
-`image-prefix` | An optional prefix for the Docker Image name. | NO | `'blueos-'`
+`image-prefix` | An optional prefix for the Docker Image name. Defaults to `'blueos-'`. | NO | `'blueos-'`
 `author` | | NO | `'Author Name'`
 `author-email` | | NO | `'author.email@example.com'`
 `maintainer` | The maintaining organisation or developer.<br> Defaults to the repository owner. | NO | `'Devs-R-US'`
@@ -45,6 +45,7 @@ jobs:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # image-name should not start with blueos- (see image-prefix)
           image-name: 'something-creative'
 ```
 
