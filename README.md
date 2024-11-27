@@ -27,7 +27,6 @@ name: Deploy BlueOS Extension Image
 
 on:
   push:
-  pull_request:
   # Run manually
   workflow_dispatch:
   # NOTE: caches may be removed if not run weekly
