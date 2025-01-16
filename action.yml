@@ -149,7 +149,7 @@ runs:
       shell: bash
 
     - name: Upload artifact arm64-v8
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success()
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm64-v8
@@ -169,7 +169,7 @@ runs:
       shell: bash
 
     - name: Upload artifact arm-v7
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success()
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm-v7
@@ -189,7 +189,7 @@ runs:
       shell: bash
 
     - name: Upload artifact amd64
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: success()
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-amd64
