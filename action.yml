@@ -51,7 +51,7 @@ runs:
   steps:
     - name: Checkout
       if: ${{ inputs.skip-checkout != 'true' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags
 
