@@ -196,7 +196,7 @@ runs:
         path: '*amd64.tar'
 
     - name: Upload docker image for release
-      uses: svenstaro/upload-release-action@v3
+      uses: svenstaro/upload-release-action@v2
       if: startsWith(github.ref, 'refs/tags') && success()
       with:
         repo_token: ${{ inputs.github-token }}
