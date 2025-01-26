@@ -36,6 +36,10 @@ inputs:
     default: ${{ github.repository_owner }}
   maintainer-email:
     default: 'maintainer.email@example.com'
+  dockerfile-location:
+    description: 'The location of the Dockerfile to be used for the build.'
+    default: '.'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -76,7 +80,7 @@ runs:
           --cache-from 'type=local,src=/tmp/.buildx-cache' \
           --cache-to 'type=local,dest=/tmp/.buildx-cache' \
           ${TAGS} \
-          --file Dockerfile ." >> $GITHUB_OUTPUT
+          --file '${{ inputs.dockerfile-location }}/Dockerfile' ." >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Set up QEMU

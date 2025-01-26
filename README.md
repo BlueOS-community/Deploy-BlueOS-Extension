@@ -17,6 +17,7 @@ Automatically builds for multiple hardware architectures, and provides inputs fo
 `author-email` | | NO | `'author.email@example.com'`
 `maintainer` | The maintaining organisation or developer.<br> Defaults to the repository owner. | NO | `'Devs-R-US'`
 `maintainer-email` | | NO | `'maintainer.email@example.com'`
+`dockerfile-location` | The location of the Dockerfile to be used for the build.<br>Defaults to the repository's root directory. | NO | `'/.container'`
 
 ## Example Usage
 
