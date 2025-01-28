@@ -144,7 +144,7 @@ runs:
       shell: bash
 
     - name: Create image artifact
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/arm64/v8') }}
       run: |
         PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
         DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
@@ -158,13 +158,13 @@ runs:
 
     - name: Upload artifact arm64-v8
       uses: actions/upload-artifact@v4
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/arm64/v8') }}
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm64-v8
         path: '*arm64-v8.tar'
 
     - name: Create image artifact
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/arm/v7') }}
       run: |
         PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
         DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
@@ -178,13 +178,13 @@ runs:
 
     - name: Upload artifact arm-v7
       uses: actions/upload-artifact@v4
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/arm/v7') }}
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm-v7
         path: '*arm-v7.tar'
 
     - name: Create image artifact
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/amd64') }}
       run: |
         PREFIXED_IMAGE=${{ inputs.image-prefix }}${{ inputs.image-name }}
         DOCKER_IMAGE=${{ inputs.docker-username }}/${PREFIXED_IMAGE}
@@ -198,7 +198,7 @@ runs:
 
     - name: Upload artifact amd64
       uses: actions/upload-artifact@v4
-      if: success()
+      if: ${{ success() && contains(inputs.build-platforms, 'linux/amd64') }}
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-amd64
         path: '*amd64.tar'
