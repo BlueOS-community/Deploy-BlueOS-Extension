@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy BlueOS Extension
-        uses: BlueOS-community/Deploy-BlueOS-Extension@v1.0.1
+        uses: BlueOS-community/Deploy-BlueOS-Extension@v1
         # specify the desired variables
         with:
           docker-username: ${{ secrets.DOCKER_USERNAME }}
@@ -50,4 +50,4 @@ jobs:
           image-name: 'something-creative'
 ```
 
-You may also wish to define some [GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables), which can be modified later / by repository forkers without needing to change the action file. [ES-Alexander/QuickStart-Python-Extension](https://github.com/ES-Alexander/QuickStart-Python-Extension/blob/main/.github/workflows/deploy.yml) is an example of this.
+You may also wish to define some [GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables), which can be modified later / by repository forkers without needing to change the action file. The [QuickStart-Python-Extension](https://github.com/BlueOS-Community/QuickStart-Python-Extension/blob/main/.github/workflows/deploy.yml) is an example of this.
