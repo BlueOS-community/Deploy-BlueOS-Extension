@@ -90,6 +90,8 @@ runs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
       with:
+        image: tonistiigi/binfmt:qemu-v7.0.0-28
+        # see https://github.com/tonistiigi/binfmt/issues/215#issuecomment-2652128238
         platforms: all
 
     - name: Set up Docker Buildx
