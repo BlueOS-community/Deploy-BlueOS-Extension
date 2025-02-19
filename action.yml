@@ -89,7 +89,7 @@ runs:
 
     - name: Set up QEMU
       # Don't Need emulation if already running on ARM
-      if: ${{ !contains(RUNNER_ARCH, 'ARM') }}
+      if: ${{ !contains($env.RUNNER_ARCH, 'ARM') }}
       uses: docker/setup-qemu-action@v3
       with:
         image: tonistiigi/binfmt:qemu-v7.0.0-28
