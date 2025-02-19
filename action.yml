@@ -27,6 +27,9 @@ inputs:
   image-prefix:
     description: 'An optional prefix for the Docker Image name.'
     default: 'blueos-'
+  image-tag:
+    description: 'An optional override for the Docker Image tag pushed to the registry.
+      Defaults to the source repository branch or tag name.'
   author:
     default: 'Author Name'
   author-email:
@@ -60,7 +63,7 @@ runs:
         # Deploy image with the name of the branch, if the build is a git tag replace tag with the tag name.
         # If the git tag is in SemVer format, append the "latest" tag to the image
         DOCKER_IMAGE=${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}
-        VERSION=${GITHUB_REF##*/}
+        VERSION=${{ inputs.image-tag || '${GITHUB_REF##*/}' }}
 
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
