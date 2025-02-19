@@ -1,7 +1,7 @@
 # Deploy-BlueOS-Extension
 An action for building a BlueOS Extension and deploying it to a Docker registry.
 
-Automatically builds for multiple hardware architectures, and provides inputs for common BlueOS Extesnion metadata variables to pass to your Dockerfile when building.
+Automatically builds for multiple hardware architectures, and provides inputs for common BlueOS Extension metadata variables to pass to your Dockerfile when building.
 
 ## Input Variables
 
@@ -51,3 +51,10 @@ jobs:
 ```
 
 You may also wish to define some [GitHub Action Variables](https://docs.github.com/en/actions/learn-github-actions/variables), which can be modified later / by repository forkers without needing to change the action file. The [QuickStart-Python-Extension](https://github.com/BlueOS-Community/QuickStart-Python-Extension/blob/main/.github/workflows/deploy.yml) is an example of this.
+
+## Outputs
+
+Built images are pushed to Docker Hub, tagged with:
+- the code repository branch name (when triggered by a code push), or
+- the name of the GitHub tag (when triggered by the creation of a GitHub release), **and**
+- `latest`, if the initial image tag is [SemVer](https://semver.org/)-compliant (to reflect that it is the most recently released version)
