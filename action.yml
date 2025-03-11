@@ -167,6 +167,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm64-v8
         path: '*arm64-v8.tar'
+        overwrite: true
 
     - name: Create image artifact
       if: ${{ success() && contains(inputs.build-platforms, 'linux/arm/v7') }}
@@ -187,6 +188,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm-v7
         path: '*arm-v7.tar'
+        overwrite: true
 
     - name: Create image artifact
       if: ${{ success() && contains(inputs.build-platforms, 'linux/amd64') }}
@@ -207,6 +209,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-amd64
         path: '*amd64.tar'
+        overwrite: true
 
     - name: Upload docker image for release
       uses: svenstaro/upload-release-action@v2
