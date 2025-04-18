@@ -27,6 +27,9 @@ inputs:
   image-prefix:
     description: 'An optional prefix for the Docker Image name.'
     default: 'blueos-'
+  image-tag:
+    description: 'An optional override for the Docker Image tag pushed to the registry.
+      Defaults to the source repository branch or tag name.'
   author:
     default: 'Author Name'
   author-email:
@@ -48,7 +51,7 @@ runs:
   steps:
     - name: Checkout
       if: ${{ inputs.skip-checkout != 'true' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0 #Number of commits to fetch. 0 indicates all history for all branches and tags
 
@@ -60,7 +63,7 @@ runs:
         # Deploy image with the name of the branch, if the build is a git tag replace tag with the tag name.
         # If the git tag is in SemVer format, append the "latest" tag to the image
         DOCKER_IMAGE=${{ inputs.docker-username }}/${{ inputs.image-prefix }}${{ inputs.image-name }}
-        VERSION=${GITHUB_REF##*/}
+        VERSION=${{ inputs.image-tag || '${GITHUB_REF##*/}' }}
 
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           VERSION=${GITHUB_REF#refs/tags/}
@@ -102,7 +105,7 @@ runs:
         version: latest
 
     - name: Cache Docker layers
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache
       with:
         path: /tmp/.buildx-cache
@@ -166,6 +169,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm64-v8
         path: '*arm64-v8.tar'
+        overwrite: true
 
     - name: Create image artifact
       if: ${{ success() && contains(inputs.build-platforms, 'linux/arm/v7') }}
@@ -186,6 +190,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-arm-v7
         path: '*arm-v7.tar'
+        overwrite: true
 
     - name: Create image artifact
       if: ${{ success() && contains(inputs.build-platforms, 'linux/amd64') }}
@@ -206,6 +211,7 @@ runs:
       with:
         name: ${{ inputs.image-prefix }}${{ inputs.image-name }}-docker-image-amd64
         path: '*amd64.tar'
+        overwrite: true
 
     - name: Upload docker image for release
       uses: svenstaro/upload-release-action@v2

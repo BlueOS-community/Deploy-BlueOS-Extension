@@ -13,6 +13,7 @@ Automatically builds for multiple hardware architectures, and provides inputs fo
 `build-platforms` | A comma-separated string of the architectures to build for.<br>Defaults to the ones BlueOS is automatically built for. | NO | `'linux/arm/v7,linux/arm64/v8,linux/amd64'`
 `image-name` | The base name for the Docker Images and GitHub Artifacts. | YES | `'extension-name'`
 `image-prefix` | An optional prefix for the Docker Image name. Defaults to `'blueos-'`. | NO | `'blueos-'`
+`image-tag` | An optional override for the Docker Image tag pushed to the registry.<br>Defaults to the source repository branch or tag name. | NO | `'custom-tag'`
 `author` | | NO | `'Author Name'`
 `author-email` | | NO | `'author.email@example.com'`
 `maintainer` | The maintaining organisation or developer.<br> Defaults to the repository owner. | NO | `'Devs-R-US'`
@@ -55,6 +56,7 @@ You may also wish to define some [GitHub Action Variables](https://docs.github.c
 ## Outputs
 
 Built images are pushed to Docker Hub, tagged with:
+- the `image-tag` value (if one is specified), or
 - the code repository branch name (when triggered by a code push), or
 - the name of the GitHub tag (when triggered by the creation of a GitHub release), **and**
 - `latest`, if the initial image tag is [SemVer](https://semver.org/)-compliant (to reflect that it is the most recently released version)
