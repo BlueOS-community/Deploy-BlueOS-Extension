@@ -109,9 +109,9 @@ runs:
       id: cache
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles('Dockerfile') }}
+        key: ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location)) }}
         restore-keys: |
-          ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles('Dockerfile') }}
+          ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location)) }}
           ${{ runner.os }}-buildx-${{ inputs.image-name }}
 
     - name: Docker Buildx (build)
