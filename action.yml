@@ -39,9 +39,13 @@ inputs:
     default: ${{ github.repository_owner }}
   maintainer-email:
     default: 'maintainer.email@example.com'
-  dockerfile-location:
-    description: 'The location of the Dockerfile to be used for the build.'
+  context:
+    description: 'The Docker build context directory.'
     default: '.'
+    required: false
+  dockerfile-location:
+    description: 'The location of the Dockerfile to be used for the build.
+      Defaults to the context directory if not specified.'
     required: false
   skip-checkout:
     description: 'Skip the checkout step (e.g. if files are already present).'
@@ -87,7 +91,7 @@ runs:
           --cache-from 'type=local,src=/tmp/.buildx-cache' \
           --cache-to 'type=local,dest=/tmp/.buildx-cache' \
           ${TAGS} \
-          --file '${{ inputs.dockerfile-location }}/Dockerfile' ." >> $GITHUB_OUTPUT
+          --file '${{ inputs.dockerfile-location || inputs.context }}/Dockerfile' '${{ inputs.context }}'" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Set up QEMU
@@ -109,9 +113,9 @@ runs:
       id: cache
       with:
         path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location)) }}
+        key: ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location || inputs.context)) }}
         restore-keys: |
-          ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location)) }}
+          ${{ runner.os }}-buildx-${{ inputs.image-name }}-${{ hashFiles(format('{0}/Dockerfile', inputs.dockerfile-location || inputs.context)) }}
           ${{ runner.os }}-buildx-${{ inputs.image-name }}
 
     - name: Docker Buildx (build)
